@@ -108,6 +108,28 @@ class Mailchimp
         }
     }
 
+    public function unsubscribe($listId, $emailAddress)
+    {
+        // Check the list exists
+        if(!$this->checkListExists($listId)) {
+            throw new MailchimpException('subscribe called on list that does not exist: ' . $listId);
+        }
+        // Check address is valid
+        $status = $this->checkStatus($listId, $emailAddress);
+        if ( ! in_array($status, ['subscribed', 'pending', 'cleaned', 'unsubscribed'])) {
+            return;
+        }
+
+        $id = md5(strtolower($emailAddress));
+        $endpoint = "lists/{$listId}/members/{$id}";
+
+        $response = $this->callApi('delete', $endpoint);
+        if (empty($response['status'])) {
+            throw new MailchimpException('subscribe received unexpected response from DrewMMailchimp: ' . json_encode($response));
+        }
+
+        return true;
+    }
 
     /**
      * @param $method
