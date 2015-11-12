@@ -91,9 +91,8 @@ class Mailchimp
         if (in_array($status, ['subscribed', 'pending', 'cleaned'])) {
             return;
         }
-        // Add/update the subscriber - PUT does both
-        $id = md5(strtolower($emailAddress));
-        $endpoint = "lists/{$listId}/members/{$id}";
+
+        $endpoint = "lists/{$listId}/members";
         $status = $confirm ? 'pending' : 'subscribed';
         $data = [
             'email_address' => $emailAddress,
@@ -102,10 +101,13 @@ class Mailchimp
         if(!empty($mergeFields)) {
             $data['merge_fields'] = $mergeFields;
         }
-        $response = $this->callApi('put', $endpoint, $data);
+        $response = $this->callApi('post', $endpoint, $data);
+
         if (empty($response['status']) || !in_array($response['status'], ['subscribed', 'pending'])) {
             throw new MailchimpException('subscribe received unexpected response from DrewMMailchimp: ' . json_encode($response));
         }
+
+        return $response;
     }
 
     public function unsubscribe($listId, $emailAddress)
@@ -129,6 +131,27 @@ class Mailchimp
         }
 
         return true;
+    }
+
+    /**
+     * List all members
+     * @param $listId
+     *
+     * @return string
+     * @throws MailchimpException
+     */
+    public function listMembers($listId)
+    {
+        // Check the list exists
+        if(!$this->checkListExists($listId)) {
+            throw new MailchimpException('checkStatus called on a list that does not exist (' . $listId . ')');
+        }
+
+        $endpoint = "lists/{$listId}/members";
+        echo $endpoint;
+        $response = $this->callApi('get', $endpoint);
+
+        return $response;
     }
 
     /**
