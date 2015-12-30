@@ -136,11 +136,12 @@ class Mailchimp
     /**
      * List all members
      * @param $listId
+     * @param $status
      *
      * @return string
      * @throws MailchimpException
      */
-    public function listMembers($listId)
+    public function listMembers($listId, $status = false)
     {
         // Check the list exists
         if(!$this->checkListExists($listId)) {
@@ -148,8 +149,14 @@ class Mailchimp
         }
 
         $endpoint = "lists/{$listId}/members";
-        echo $endpoint;
-        $response = $this->callApi('get', $endpoint);
+
+        $data = [];
+
+        if ($status) {
+            $data['status'] = $status;
+        }
+        
+        $response = $this->callApi('get', $endpoint, $data);
 
         return $response;
     }
